@@ -2,7 +2,5 @@
 <resources>
     <color name="ally_blue">#1447E6</color>
     <color name="ally_white">#FFFFFF</color>
-    <color name="ally_splash_background">#020017</color>
-    <color name="ally_splash_icon_background">#1E1D40</color>
     <color name="ally_loading_background">#1E3A8A</color>
 </resources>

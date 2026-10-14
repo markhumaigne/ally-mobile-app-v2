@@ -4,7 +4,7 @@ Independent Flutter Android client for the existing HumAIn PH ALLY platform. Mat
 
 ## Current delivery
 
-- Two-stage startup matching the supplied references: a near-black native Android launch screen with a large microphone badge, followed by a blue Flutter loading screen with a smaller translucent microphone badge, ALLY title, creator subtitle and pale spinner. The branding is fully opaque from its first frame, with a subtle 300 ms scale entrance. A two-second introduction starts after Flutter's first frame is rasterized, avoiding time lost during engine startup. This intentional branding interval does not represent a backend request. Reduced-motion mode keeps the content still for the same reading time.
+- One visible app introduction: the blue ALLY loading screen with a small translucent microphone badge, ALLY title, creator subtitle and pale spinner, followed by Home. The separate Android startup preview is suppressed. The launcher/previous surface remains visible while the engine starts, then Flutter displays the complete loading screen. The branding is fully opaque from its first frame, with a subtle 300 ms scale entrance. A two-second introduction starts after Flutter's first frame is rasterized, avoiding time lost during engine startup. This intentional branding interval does not represent a backend request. Reduced-motion mode keeps the content still for the same reading time.
 - Responsive Home form, UUID validation, optional in-memory User ID reference, loading and error feedback.
 - Subscription-verified session and Chatbot / Voice Orb selection.
 - Text chat connected to the **inspected** NestJS contract, with distinct message bubbles, keyboard-aware composer, pending and failed delivery states.
@@ -37,7 +37,7 @@ flutter run --dart-define=ALLY_API_BASE_URL=https://your-api.example/api/v1
 
 Changing a dart define requires stopping and restarting the app; hot reload does not change compile-time configuration. An omitted/invalid URL produces a setup message and prevents requests.
 
-To see the loading screen again, stop the running app (`q` in the `flutter run` terminal), then run the command above again. Hot reload (`r`) and returning to an already-open app keep the current screen. Hot restart (`R`) restarts the Flutter introduction; a full stop and launch also replays Android's native microphone splash.
+To see the loading screen again, stop the running app (`q` in the `flutter run` terminal), then run the command above again. Hot reload (`r`) and returning to an already-open app keep the current screen. Hot restart (`R`) restarts the Flutter introduction. Android resource changes require a full stop and rebuild; hot reload/restart cannot update the native launch background.
 
 Local NestJS networking:
 
@@ -70,7 +70,7 @@ Validation performed on 14 October 2026:
 | `flutter test --no-pub` | 51 tests passed |
 | Debug APK build | Passed |
 | Android 15 emulator install and launch | Passed; Home visually inspected |
-| Cold-start sequence | Native splash → visible blue ALLY screen → Home confirmed by emulator screenshots |
+| Cold-start sequence | Blue ALLY loading screen → Home; no separate blank blue preview in Android 15 emulator captures, in light and dark modes |
 | Empty UUID on emulator | Correct validation message |
 | Live activation HTTP request on emulator | HTTP 200; correctly blocked on missing subscription |
 | Successful activation, chat, selection, protected navigation | Passed with test doubles |
@@ -128,6 +128,7 @@ Transitive dependencies are recorded in `pubspec.lock`; no other direct runtime 
 ## Modifying and debugging
 
 - Change brand values in `core/theme/`, reusable visuals in `widgets/`, and screen layouts in `screens/`.
+- Android startup uses `windowDisablePreview` and, on Android 12+, a transient translucent **launch** theme. Modern Android launcher starts ignore `windowDisablePreview` for opaque themes, as shown in [Android's starting-window implementation](https://github.com/aosp-mirror/platform_frameworks_base/blob/android15-release/services/core/java/com/android/server/wm/ActivityRecord.java). Flutter uses an opaque `NormalTheme`; `MainActivity.onFlutterUiDisplayed` also makes the activity opaque once its first frame appears, allowing Android to release the surface behind it. Flutter retains its default surface renderer. Validate a full launcher start when changing these settings; hot reload cannot verify them. Initial engine startup still takes time, especially in debug builds.
 - Providers own loading/error/session state. Screens contain no HTTP calls.
 - Contract changes belong in repositories and models; base URL, timeouts and network behavior belong in configuration/service.
 - Use Flutter DevTools to inspect Provider state and breakpoints in `ApiAgentRepository.activate` or `ChatProvider.send`.
