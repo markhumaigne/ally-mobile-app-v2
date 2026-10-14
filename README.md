@@ -4,7 +4,7 @@ Independent Flutter Android client for the existing HumAIn PH ALLY platform. Mat
 
 ## Current delivery
 
-- Branded native Android launch screen and centered Flutter loading screen with a midnight navy background, purple microphone ring, ALLY title and purple spinner; no fixed loading delay.
+- Two-stage startup matching the supplied references: a near-black native Android launch screen with a large microphone badge, followed by a blue Flutter loading screen with a smaller translucent microphone badge, ALLY title, creator subtitle and pale spinner. The branding is fully opaque from its first frame, with a subtle 300 ms scale entrance. A two-second introduction starts after Flutter's first frame is rasterized, avoiding time lost during engine startup. This intentional branding interval does not represent a backend request. Reduced-motion mode keeps the content still for the same reading time.
 - Responsive Home form, UUID validation, optional in-memory User ID reference, loading and error feedback.
 - Subscription-verified session and Chatbot / Voice Orb selection.
 - Text chat connected to the **inspected** NestJS contract, with distinct message bubbles, keyboard-aware composer, pending and failed delivery states.
@@ -37,6 +37,8 @@ flutter run --dart-define=ALLY_API_BASE_URL=https://your-api.example/api/v1
 
 Changing a dart define requires stopping and restarting the app; hot reload does not change compile-time configuration. An omitted/invalid URL produces a setup message and prevents requests.
 
+To see the loading screen again, stop the running app (`q` in the `flutter run` terminal), then run the command above again. Hot reload (`r`) and returning to an already-open app keep the current screen. Hot restart (`R`) restarts the Flutter introduction; a full stop and launch also replays Android's native microphone splash.
+
 Local NestJS networking:
 
 | Device | API base URL |
@@ -65,9 +67,10 @@ Validation performed on 14 October 2026:
 | --- | --- |
 | `flutter pub get` | Passed |
 | `flutter analyze --no-pub` | Passed, no issues |
-| `flutter test --no-pub` | 48 tests passed |
+| `flutter test --no-pub` | 51 tests passed |
 | Debug APK build | Passed |
 | Android 15 emulator install and launch | Passed; Home visually inspected |
+| Cold-start sequence | Native splash → visible blue ALLY screen → Home confirmed by emulator screenshots |
 | Empty UUID on emulator | Correct validation message |
 | Live activation HTTP request on emulator | HTTP 200; correctly blocked on missing subscription |
 | Successful activation, chat, selection, protected navigation | Passed with test doubles |
@@ -108,7 +111,7 @@ ally_mobile_app/
 └── README.md
 ```
 
-Icons and the orb use Flutter drawing and Android vector resources. Empty raster asset directories were intentionally omitted; add `assets/icons/` or `assets/images/` and pubspec entries when actual assets exist. No screenshot attachments were available, so the UI follows the supplied layout and color specifications.
+Icons and the orb use Flutter drawing and Android vector resources. Empty raster asset directories were intentionally omitted; add `assets/icons/` or `assets/images/` and pubspec entries when actual assets exist. The startup screens follow the supplied screenshot references; other screens follow the supplied layout and color specifications.
 
 ## Dependencies
 

@@ -16,11 +16,15 @@ class AllyApp extends StatefulWidget {
     required this.chatRepository,
     this.config = const AppConfig(),
     this.initialLocation = '/splash',
+    this.firstFrameReady,
   });
   final AgentRepository agentRepository;
   final ChatRepository chatRepository;
   final AppConfig config;
   final String initialLocation;
+
+  /// The engine's first rasterized frame; injected by main for cold starts.
+  final Future<void>? firstFrameReady;
   @override
   State<AllyApp> createState() => _AllyAppState();
 }
@@ -34,6 +38,7 @@ class _AllyAppState extends State<AllyApp> with WidgetsBindingObserver {
   late final GoRouter _router = createAppRouter(
     _agents,
     initialLocation: widget.initialLocation,
+    firstFrameReady: widget.firstFrameReady,
   );
   @override
   void initState() {

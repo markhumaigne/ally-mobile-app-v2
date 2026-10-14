@@ -12,6 +12,7 @@ void main() {
   runApp(
     AllyApp(
       config: config,
+      firstFrameReady: WidgetsBinding.instance.waitUntilFirstFrameRasterized,
       agentRepository: ApiAgentRepository(api),
       chatRepository: ApiChatRepository(api),
     ),

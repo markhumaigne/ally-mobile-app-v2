@@ -15,6 +15,29 @@ import 'package:ally_mobile_app/screens/voice/voice_screen.dart';
 import 'support/fixtures.dart';
 
 void main() {
+  testWidgets('slow first frame cannot consume the blue screen display time', (
+    tester,
+  ) async {
+    final firstFrame = Completer<void>();
+    await tester.pumpWidget(
+      AllyApp(
+        agentRepository: FakeAgentRepository(),
+        chatRepository: FakeChatRepository(),
+        firstFrameReady: firstFrame.future,
+      ),
+    );
+    await tester.pump(const Duration(seconds: 5));
+    expect(find.byType(SplashScreen), findsOneWidget);
+    expect(find.byType(HomeScreen), findsNothing);
+    firstFrame.complete();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 1900));
+    expect(find.byType(SplashScreen), findsOneWidget);
+    await tester.pumpAndSettle();
+    expect(find.byType(HomeScreen), findsOneWidget);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
   Future<void> launch(
     WidgetTester tester,
     FakeAgentRepository agents, {
@@ -47,13 +70,18 @@ void main() {
   }
 
   testWidgets(
-    'splash initializes without a fixed timer, then Home validates form',
+    'blue splash stays visible for two seconds, then Home validates form',
     (tester) async {
       final agents = FakeAgentRepository();
       await tester.pumpWidget(
         AllyApp(agentRepository: agents, chatRepository: FakeChatRepository()),
       );
       expect(find.byType(SplashScreen), findsOneWidget);
+      await tester.pump(const Duration(milliseconds: 1900));
+      expect(find.byType(SplashScreen), findsOneWidget);
+      expect(find.text('ALLY'), findsOneWidget);
+      expect(find.text('Created by HumAIn PH'), findsOneWidget);
+      expect(find.byType(HomeScreen), findsNothing);
       await tester.pumpAndSettle();
       expect(find.byType(HomeScreen), findsOneWidget);
       await tester.ensureVisible(find.byKey(const Key('activate-button')));
@@ -64,6 +92,43 @@ void main() {
       await tester.pumpWidget(const SizedBox.shrink());
     },
   );
+
+  testWidgets('reduced motion keeps the blue intro visible before Home', (
+    tester,
+  ) async {
+    tester.platformDispatcher.accessibilityFeaturesTestValue =
+        const FakeAccessibilityFeatures(disableAnimations: true);
+    addTearDown(tester.platformDispatcher.clearAccessibilityFeaturesTestValue);
+    await tester.pumpWidget(
+      AllyApp(
+        agentRepository: FakeAgentRepository(),
+        chatRepository: FakeChatRepository(),
+      ),
+    );
+    await tester.pump(const Duration(milliseconds: 1900));
+    expect(find.text('Created by HumAIn PH'), findsOneWidget);
+    expect(find.byType(HomeScreen), findsNothing);
+    await tester.pumpAndSettle();
+    expect(find.byType(HomeScreen), findsOneWidget);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('disposing before the first frame cancels startup safely', (
+    tester,
+  ) async {
+    final firstFrame = Completer<void>();
+    await tester.pumpWidget(
+      AllyApp(
+        agentRepository: FakeAgentRepository(),
+        chatRepository: FakeChatRepository(),
+        firstFrameReady: firstFrame.future,
+      ),
+    );
+    await tester.pumpWidget(const SizedBox.shrink());
+    firstFrame.complete();
+    await tester.pump(const Duration(seconds: 3));
+    expect(tester.takeException(), isNull);
+  });
 
   testWidgets(
     'Home shows loading, prevents duplicate activation, and displays failure',
