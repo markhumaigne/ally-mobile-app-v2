@@ -21,49 +21,60 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   @override
-  Widget build(BuildContext context) =>
-      const AnnotatedRegion<SystemUiOverlayStyle>(
-        value: SystemUiOverlayStyle.light,
-        child: Scaffold(
-          backgroundColor: AppColors.royal,
-          body: SafeArea(
-            child: Center(
-              child: SingleChildScrollView(
-                padding: EdgeInsets.all(32),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    BrandMark(size: 104, onBlue: true),
-                    SizedBox(height: 28),
-                    Text(
-                      'ALLY',
-                      style: TextStyle(
-                        color: AppColors.white,
-                        fontSize: 56,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 6,
-                      ),
-                    ),
-                    SizedBox(height: 8),
-                    Text(
-                      'Created by HumAIn PH',
-                      style: TextStyle(color: AppColors.paleBlue, fontSize: 16),
-                    ),
-                    SizedBox(height: 48),
-                    SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: AppColors.white,
-                        semanticsLabel: 'Initializing ALLY',
-                      ),
-                    ),
-                  ],
+  Widget build(BuildContext context) => AnnotatedRegion<SystemUiOverlayStyle>(
+    value: const SystemUiOverlayStyle(
+      statusBarColor: AppColors.midnight,
+      statusBarIconBrightness: Brightness.light,
+      systemNavigationBarColor: AppColors.midnight,
+      systemNavigationBarIconBrightness: Brightness.light,
+    ),
+    child: Scaffold(
+      backgroundColor: AppColors.midnight,
+      body: SafeArea(
+        child: Align(
+          alignment: const Alignment(0, -0.06),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const BrandMark(size: 80, onDark: true),
+                const SizedBox(height: 24),
+                const Text(
+                  'ALLY',
+                  style: TextStyle(
+                    color: AppColors.white,
+                    fontSize: 32,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 4,
+                  ),
                 ),
-              ),
+                const SizedBox(height: 8),
+                Text(
+                  'Created by HumAIn PH',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: AppColors.white.withValues(alpha: 0.7),
+                    fontSize: 12,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                const SizedBox(height: 36),
+                const SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.5,
+                    strokeCap: StrokeCap.round,
+                    color: AppColors.violet,
+                    semanticsLabel: 'Initializing ALLY',
+                  ),
+                ),
+              ],
             ),
           ),
         ),
-      );
+      ),
+    ),
+  );
 }
