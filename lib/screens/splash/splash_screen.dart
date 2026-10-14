@@ -23,13 +23,13 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) => AnnotatedRegion<SystemUiOverlayStyle>(
     value: const SystemUiOverlayStyle(
-      statusBarColor: AppColors.midnight,
+      statusBarColor: AppColors.loadingBackground,
       statusBarIconBrightness: Brightness.light,
-      systemNavigationBarColor: AppColors.midnight,
+      systemNavigationBarColor: AppColors.loadingBackground,
       systemNavigationBarIconBrightness: Brightness.light,
     ),
     child: Scaffold(
-      backgroundColor: AppColors.midnight,
+      backgroundColor: AppColors.loadingBackground,
       body: SafeArea(
         child: Align(
           alignment: const Alignment(0, -0.06),
@@ -38,7 +38,7 @@ class _SplashScreenState extends State<SplashScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const BrandMark(size: 80, onDark: true),
+                const BrandMark(size: 80, onSplash: true),
                 const SizedBox(height: 24),
                 const Text(
                   'ALLY',
@@ -60,13 +60,13 @@ class _SplashScreenState extends State<SplashScreen> {
                   ),
                 ),
                 const SizedBox(height: 36),
-                const SizedBox(
+                SizedBox(
                   width: 22,
                   height: 22,
                   child: CircularProgressIndicator(
                     strokeWidth: 2.5,
                     strokeCap: StrokeCap.round,
-                    color: AppColors.violet,
+                    color: AppColors.white.withValues(alpha: 0.7),
                     semanticsLabel: 'Initializing ALLY',
                   ),
                 ),

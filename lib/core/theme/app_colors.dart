@@ -19,4 +19,5 @@ abstract final class AppColors {
   static const black = Color(0xFF000000);
   static const royal = Color(0xFF1447E6);
   static const darkBlue = Color(0xFF1C398E);
+  static const loadingBackground = Color(0xFF1E3A8A);
 }

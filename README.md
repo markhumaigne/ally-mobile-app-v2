@@ -4,7 +4,7 @@ Independent Flutter Android client for the existing HumAIn PH ALLY platform. Mat
 
 ## Current delivery
 
-- Branded native Android launch screen and centered Flutter loading screen with a midnight navy background, purple microphone ring, ALLY title and purple spinner; no fixed loading delay.
+- Two-stage startup matching the supplied references: a near-black native Android launch screen with a large microphone badge, followed by a blue Flutter loading screen with a smaller translucent microphone badge, ALLY title, creator subtitle and pale spinner; no fixed loading delay.
 - Responsive Home form, UUID validation, optional in-memory User ID reference, loading and error feedback.
 - Subscription-verified session and Chatbot / Voice Orb selection.
 - Text chat connected to the **inspected** NestJS contract, with distinct message bubbles, keyboard-aware composer, pending and failed delivery states.

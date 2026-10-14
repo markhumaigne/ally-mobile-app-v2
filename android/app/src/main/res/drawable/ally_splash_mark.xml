@@ -1,8 +1,10 @@
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="80dp" android:height="80dp" android:viewportWidth="80" android:viewportHeight="80">
-    <path android:fillColor="@color/ally_splash_accent" android:fillAlpha="0.18"
-        android:strokeColor="@color/ally_splash_accent" android:strokeAlpha="0.55" android:strokeWidth="1"
-        android:pathData="M40,0.5a39.5,39.5 0,1 0,0,79a39.5,39.5 0,1 0,0,-79"/>
-    <path android:fillColor="@color/ally_white"
-        android:pathData="M40,24a5,5 0,0 0,-5,5v12a5,5 0,0 0,10,0v-12a5,5 0,0 0,-5,-5zM31,39h-3v2a12,12 0,0 0,10.5,11.9v4.1h3v-4.1a12,12 0,0 0,10.5,-11.9v-2h-3v2a9,9 0,0 1,-18,0z"/>
+    android:width="288dp" android:height="288dp" android:viewportWidth="288" android:viewportHeight="288">
+    <!-- Keep the complete badge within Android 12's central icon safe area. -->
+    <path android:fillColor="@color/ally_splash_icon_background"
+        android:pathData="M144,56a88,88 0,1 0,0,176a88,88 0,1 0,0,-176"/>
+    <group android:translateX="76" android:translateY="76" android:scaleX="5.666667" android:scaleY="5.666667">
+        <path android:fillColor="@color/ally_white"
+            android:pathData="M12,14c1.66,0 3,-1.34 3,-3V5c0,-1.66 -1.34,-3 -3,-3S9,3.34 9,5v6c0,1.66 1.34,3 3,3zM17.3,11c0,3 -2.54,5.1 -5.3,5.1S6.7,14 6.7,11H5c0,3.41 2.72,6.23 6,6.72V21h2v-3.28c3.28,-0.49 6,-3.31 6,-6.72z"/>
+    </group>
 </vector>
