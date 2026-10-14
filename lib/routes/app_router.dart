@@ -9,6 +9,7 @@ import '../screens/voice/voice_screen.dart';
 GoRouter createAppRouter(
   AgentProvider agents, {
   String initialLocation = '/splash',
+  Future<void>? firstFrameReady,
 }) => GoRouter(
   initialLocation: initialLocation,
   refreshListenable: agents,
@@ -20,7 +21,10 @@ GoRouter createAppRouter(
     return null;
   },
   routes: [
-    GoRoute(path: '/splash', builder: (_, _) => const SplashScreen()),
+    GoRoute(
+      path: '/splash',
+      builder: (_, _) => SplashScreen(firstFrameReady: firstFrameReady),
+    ),
     GoRoute(
       path: '/',
       builder: (_, _) => const HomeScreen(),
