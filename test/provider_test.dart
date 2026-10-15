@@ -8,6 +8,33 @@ import 'package:ally_mobile_app/providers/chat_provider.dart';
 import 'support/fixtures.dart';
 
 void main() {
+  testWidgets('public activation replaces expiry timer and clears on reset', (
+    tester,
+  ) async {
+    var now = DateTime(2026, 10, 15);
+    final expiry = now.add(const Duration(seconds: 2));
+    final repository = FakeAgentRepository()
+      ..handler = (_) async => testSession(expiresAt: expiry);
+    final agents = AgentProvider(repository, now: () => now);
+    final chat = ChatProvider(FakeChatRepository(), agents);
+    addTearDown(agents.dispose);
+    addTearDown(chat.dispose);
+    await agents.activate(agentId);
+    repository.handler = (_) async => publicTestSession();
+    await agents.activate(agentId);
+    await chat.send('Hello');
+    now = now.add(const Duration(hours: 1));
+    await tester.pump(const Duration(hours: 1));
+    agents.checkExpiry();
+    expect(agents.state, ActivationState.success);
+    expect(agents.hasSession, isTrue);
+    expect(agents.session!.expiresAt, isNull);
+    expect(chat.messages, hasLength(2));
+    agents.reset();
+    expect(agents.hasSession, isFalse);
+    expect(chat.messages, isEmpty);
+  });
+
   testWidgets('expiry timer revokes the session and clears the conversation', (
     tester,
   ) async {
@@ -148,6 +175,23 @@ void main() {
       await chat.send('hello');
       expect(agents.hasSession, isFalse);
       expect(agents.error?.kind, ErrorKind.unauthorized);
+      expect(chat.messages, isEmpty);
+    },
+  );
+  test(
+    'public session still respects a backend authorization rejection',
+    () async {
+      repository.handler = (_) async => publicTestSession();
+      await agents.activate(agentId);
+      final chat = ChatProvider(
+        FakeChatRepository()
+          ..handler = () async => throw AppException.fromStatus(403),
+        agents,
+      );
+      addTearDown(chat.dispose);
+      await chat.send('Hello');
+      expect(agents.hasSession, isFalse);
+      expect(agents.error?.kind, ErrorKind.forbidden);
       expect(chat.messages, isEmpty);
     },
   );

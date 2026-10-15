@@ -38,33 +38,30 @@ class ApiAgentRepository implements AgentRepository {
         'This agent is inactive or unavailable. Contact the agent owner.',
       );
     }
-    if (data['subscriptions'] == null) {
-      throw const AppException(
-        ErrorKind.subscriptionUnverified,
-        'No linked subscription was returned. An active subscription must be verified before activation.',
-      );
-    }
-    final subscription = jsonObject(data['subscriptions']);
-    if (subscription['status'] is! String) throw AppException.unexpected;
-    if (subscription['status'] != 'active') {
-      throw const AppException(
-        ErrorKind.inactiveSubscription,
-        'This agent’s subscription is not active. Contact the agent owner.',
-      );
-    }
+    // Agent status is the activation rule. Subscription data is optional metadata.
+    final subscription = data['subscriptions'];
+    final subscriptionStatus = subscription is Map<String, dynamic>
+        ? subscription['status']
+        : null;
     final token = result['embedToken'];
     final expiry = result['embedTokenExpiresAt'];
-    if (token is! String ||
-        token.isEmpty ||
-        token.length > 2048 ||
-        RegExp(r'\s').hasMatch(token) ||
-        expiry is! int ||
-        expiry <=
-            _now().add(const Duration(seconds: 30)).millisecondsSinceEpoch ||
-        expiry > _now().add(const Duration(hours: 1)).millisecondsSinceEpoch) {
+    // No token/expiry is the older public embed contract. Never downgrade a
+    // malformed or expired signed session to an anonymous request.
+    if ((token != null || expiry != null) &&
+        (token is! String ||
+            token.isEmpty ||
+            token.length > 2048 ||
+            RegExp(r'\s').hasMatch(token) ||
+            expiry is! int ||
+            expiry <=
+                _now()
+                    .add(const Duration(seconds: 30))
+                    .millisecondsSinceEpoch ||
+            expiry >
+                _now().add(const Duration(hours: 1)).millisecondsSinceEpoch)) {
       throw const AppException(
         ErrorKind.unauthorized,
-        'The backend did not issue a usable assistant session. Check embed-session configuration.',
+        'The backend returned an invalid or expired assistant session. Activate the agent again.',
       );
     }
     final name = data['name'];
@@ -75,10 +72,14 @@ class ApiAgentRepository implements AgentRepository {
         name: name is String && name.trim().isNotEmpty
             ? name.trim()
             : 'ALLY Assistant',
-        subscriptionStatus: subscription['status'] as String,
+        subscriptionStatus: subscriptionStatus is String
+            ? subscriptionStatus
+            : null,
       ),
-      embedToken: token,
-      expiresAt: DateTime.fromMillisecondsSinceEpoch(expiry),
+      embedToken: token as String?,
+      expiresAt: expiry == null
+          ? null
+          : DateTime.fromMillisecondsSinceEpoch(expiry as int),
       userReference: userReference?.trim().isEmpty ?? true
           ? null
           : userReference!.trim(),

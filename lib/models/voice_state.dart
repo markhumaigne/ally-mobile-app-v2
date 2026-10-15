@@ -1,5 +1,5 @@
 enum VoiceState {
-  idle('Voice preview'),
+  idle('Ready to start'),
   connecting('Connecting'),
   listening('Listening'),
   thinking('Thinking'),

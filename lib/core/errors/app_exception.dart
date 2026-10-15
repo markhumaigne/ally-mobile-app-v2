@@ -8,9 +8,11 @@ enum ErrorKind {
   invalidRequest,
   inactiveAgent,
   inactiveSubscription,
-  subscriptionUnverified,
   rateLimited,
   server,
+  assistantUnavailable,
+  microphone,
+  voice,
   unexpectedResponse,
   unknown,
 }
@@ -28,7 +30,6 @@ class AppException implements Exception {
     ErrorKind.notFound,
     ErrorKind.inactiveAgent,
     ErrorKind.inactiveSubscription,
-    ErrorKind.subscriptionUnverified,
   }.contains(kind);
 
   factory AppException.fromStatus(int status) {

@@ -4,8 +4,9 @@ import 'package:provider/provider.dart';
 import '../../core/theme/app_colors.dart';
 import '../../providers/agent_provider.dart';
 import '../../providers/chat_provider.dart';
+import '../../providers/voice_provider.dart';
+import '../../models/chat_message_model.dart';
 import '../../widgets/chat/message_bubble.dart';
-import '../../widgets/common/brand_mark.dart';
 import '../../widgets/common/feedback_banner.dart';
 
 class ChatScreen extends StatefulWidget {
@@ -18,11 +19,13 @@ class _ChatScreenState extends State<ChatScreen> {
   final _input = TextEditingController();
   final _scroll = ScrollController();
   ChatProvider? _chat;
+  VoiceProvider? _voice;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     final chat = context.read<ChatProvider>();
+    _voice = context.read<VoiceProvider>();
     if (_chat != chat) {
       _chat?.removeListener(_onMessages);
       _chat = chat;
@@ -42,14 +45,26 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   void _send() {
-    if (_input.text.trim().isEmpty || _chat!.isSending) return;
+    if (_input.text.trim().isEmpty ||
+        _chat!.isSending ||
+        !_voice!.canSendText) {
+      return;
+    }
     final text = _input.text;
     _input.clear();
-    _chat!.send(text);
+    if (_voice!.connected) {
+      _voice!.sendText(text);
+    } else {
+      _chat!.send(text);
+    }
   }
 
   @override
   void dispose() {
+    // Schedule after this frame: route teardown must not notify widgets while
+    // their element tree is being unmounted. Resources stop immediately next turn.
+    final voice = _voice;
+    Future.microtask(() => voice?.stop());
     _chat?.removeListener(_onMessages);
     _input.dispose();
     _scroll.dispose();
@@ -60,11 +75,12 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget build(BuildContext context) {
     final agent = context.watch<AgentProvider>().session?.agent;
     final chat = context.watch<ChatProvider>();
+    final voice = context.watch<VoiceProvider>();
     final theme = Theme.of(context);
     final messages = chat.messages;
     return Scaffold(
       appBar: AppBar(
-        toolbarHeight: 80,
+        toolbarHeight: 72,
         leading: IconButton(
           tooltip: 'Back to assistants',
           onPressed: () => context.go('/'),
@@ -84,9 +100,13 @@ class _ChatScreenState extends State<ChatScreen> {
               children: [
                 Icon(Icons.circle, color: AppColors.green, size: 7),
                 SizedBox(width: 6),
-                Text(
-                  'Agent active',
-                  style: TextStyle(fontSize: 12, color: AppColors.paleBlue),
+                Expanded(
+                  child: Text(
+                    'Powered by HumAIn',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontSize: 12, color: AppColors.paleBlue),
+                  ),
                 ),
               ],
             ),
@@ -106,16 +126,14 @@ class _ChatScreenState extends State<ChatScreen> {
                           padding: const EdgeInsets.all(32),
                           child: Column(
                             children: [
-                              const SizedBox(height: 60),
-                              const BrandMark(size: 72),
-                              const SizedBox(height: 24),
+                              const SizedBox(height: 48),
                               Text(
-                                'Start a conversation',
+                                'Welcome',
                                 style: theme.textTheme.titleLarge,
                               ),
                               const SizedBox(height: 10),
                               Text(
-                                'A question, an idea, a little help.\nYour assistant is one message away.',
+                                'Press the voice button to hear your assistant’s introduction, or type a message below.',
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                   color: theme.colorScheme.onSurfaceVariant,
@@ -149,19 +167,68 @@ class _ChatScreenState extends State<ChatScreen> {
                       ],
                     ),
                   ),
-                if (chat.error != null)
+                if (chat.error != null || voice.error != null)
                   Flexible(
                     child: SingleChildScrollView(
                       padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                      child: FeedbackBanner(
-                        message:
-                            '${chat.error!.message} '
-                            'Delivery may be unconfirmed. Review the conversation before sending again.',
-                        isError: true,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          FeedbackBanner(
+                            message: (chat.error ?? voice.error)!.message,
+                            isError: true,
+                          ),
+                          if (chat.error != null &&
+                              messages.any(
+                                (m) => m.delivery == MessageDelivery.failed,
+                              ))
+                            TextButton(
+                              key: const Key('edit-failed-message'),
+                              onPressed: () {
+                                _input.text = messages
+                                    .lastWhere(
+                                      (m) =>
+                                          m.delivery == MessageDelivery.failed,
+                                    )
+                                    .text;
+                                _input.selection = TextSelection.collapsed(
+                                  offset: _input.text.length,
+                                );
+                              },
+                              child: const Text('Edit last message'),
+                            ),
+                        ],
                       ),
                     ),
                   ),
                 const Divider(height: 1),
+                Padding(
+                  padding: const EdgeInsets.only(top: 12),
+                  child: Semantics(
+                    liveRegion: true,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.circle,
+                          size: 8,
+                          color: voice.connected
+                              ? AppColors.green
+                              : AppColors.chatMuted,
+                        ),
+                        const SizedBox(width: 8),
+                        Flexible(
+                          child: Text(
+                            chat.isSending
+                                ? 'Waiting for a reply…'
+                                : voice.statusLabel,
+                            style: theme.textTheme.bodySmall,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
                   child: Row(
@@ -175,30 +242,71 @@ class _ChatScreenState extends State<ChatScreen> {
                           maxLines: 5,
                           textCapitalization: TextCapitalization.sentences,
                           textInputAction: TextInputAction.newline,
-                          decoration: const InputDecoration(
-                            hintText: 'Message your assistant…',
-                            labelText: 'Message',
+                          decoration: InputDecoration(
+                            hintText: 'Ask anything',
+                            fillColor: AppColors.chatComposer,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(32),
+                            ),
                           ),
                         ),
                       ),
                       const SizedBox(width: 10),
                       ValueListenableBuilder<TextEditingValue>(
                         valueListenable: _input,
-                        builder: (context, value, _) => IconButton.filled(
-                          key: const Key('send-button'),
-                          tooltip: 'Send message',
-                          onPressed: chat.isSending || value.text.trim().isEmpty
-                              ? null
-                              : _send,
-                          icon: const Icon(Icons.arrow_upward_rounded),
-                          style: IconButton.styleFrom(
-                            minimumSize: const Size(52, 52),
-                          ),
-                        ),
+                        builder: (context, value, _) =>
+                            value.text.trim().isEmpty
+                            ? IconButton.filled(
+                                key: const Key('voice-button'),
+                                tooltip: voice.connected || voice.busy
+                                    ? 'Stop voice'
+                                    : 'Start voice',
+                                onPressed: chat.isSending
+                                    ? null
+                                    : () {
+                                        FocusScope.of(context).unfocus();
+                                        if (voice.connected || voice.busy) {
+                                          voice.stop();
+                                        } else {
+                                          voice.start();
+                                        }
+                                      },
+                                icon: Icon(
+                                  voice.connected || voice.busy
+                                      ? Icons.stop_rounded
+                                      : Icons.graphic_eq_rounded,
+                                ),
+                                style: IconButton.styleFrom(
+                                  backgroundColor: voice.connected
+                                      ? AppColors.red
+                                      : AppColors.white,
+                                  foregroundColor: voice.connected
+                                      ? AppColors.white
+                                      : AppColors.chatHeader,
+                                  minimumSize: const Size(52, 52),
+                                ),
+                              )
+                            : IconButton.filled(
+                                key: const Key('send-button'),
+                                tooltip: 'Send message',
+                                onPressed: chat.isSending || !voice.canSendText
+                                    ? null
+                                    : _send,
+                                icon: const Icon(Icons.arrow_upward_rounded),
+                                style: IconButton.styleFrom(
+                                  minimumSize: const Size(52, 52),
+                                ),
+                              ),
                       ),
                     ],
                   ),
                 ),
+                if (voice.connected || voice.busy)
+                  TextButton.icon(
+                    onPressed: voice.stop,
+                    icon: const Icon(Icons.mic_off_rounded, size: 18),
+                    label: const Text('Stop voice · Keep chatting'),
+                  ),
                 Padding(
                   padding: const EdgeInsets.only(bottom: 12),
                   child: Text(

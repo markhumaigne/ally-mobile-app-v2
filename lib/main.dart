@@ -3,6 +3,7 @@ import 'app.dart';
 import 'core/config/app_config.dart';
 import 'repositories/agent_repository.dart';
 import 'repositories/chat_repository.dart';
+import 'repositories/voice_repository.dart';
 import 'services/api_service.dart';
 
 void main() {
@@ -15,6 +16,7 @@ void main() {
       firstFrameReady: WidgetsBinding.instance.waitUntilFirstFrameRasterized,
       agentRepository: ApiAgentRepository(api),
       chatRepository: ApiChatRepository(api),
+      voiceRepository: ApiVoiceRepository(api),
     ),
   );
 }

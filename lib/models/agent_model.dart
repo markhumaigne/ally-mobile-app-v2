@@ -2,26 +2,28 @@ class AgentModel {
   const AgentModel({
     required this.id,
     required this.name,
-    required this.subscriptionStatus,
+    this.subscriptionStatus,
   });
   final String id;
   final String name;
-  final String subscriptionStatus;
+  final String? subscriptionStatus;
 }
 
-/// Public embed permission, not an authenticated account or ownership claim.
-/// Credentials and optional user reference stay in memory only.
+/// A backend-validated active agent, not an account or ownership claim.
+/// Older public embed deployments omit credentials and expiry. Newer deployments
+/// return both; the backend remains responsible for authorizing chat requests.
 class AgentSession {
   const AgentSession({
     required this.agent,
-    required this.embedToken,
-    required this.expiresAt,
+    this.embedToken,
+    this.expiresAt,
     this.userReference,
   });
   final AgentModel agent;
-  final String embedToken;
-  final DateTime expiresAt;
+  final String? embedToken;
+  final DateTime? expiresAt;
   final String? userReference;
 
-  bool isValidAt(DateTime now) => expiresAt.isAfter(now);
+  bool isValidAt(DateTime now) =>
+      embedToken == null ? expiresAt == null : expiresAt?.isAfter(now) ?? false;
 }

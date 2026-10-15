@@ -1,0 +1,122 @@
+diff --git a/apps/backend/api/src/app/embed/embed.service.ts b/apps/backend/api/src/app/embed/embed.service.ts
+index 87d6fdc..eefc349 100644
+--- a/apps/backend/api/src/app/embed/embed.service.ts
++++ b/apps/backend/api/src/app/embed/embed.service.ts
+@@ -18,6 +18,7 @@ import {
+   Behavior,
+ } from '@google/genai';
+ import { HttpService } from '@nestjs/axios';
++import { retryGemini503, upstreamStatus } from './gemini-text-retry';
+ import { firstValueFrom } from 'rxjs';
+ import { ThrottlerStorage } from '@nestjs/throttler';
+ import { createHash, randomUUID } from 'node:crypto';
+@@ -435,9 +436,13 @@ ${payload.userMessage}
+         const requestBody: any = { contents };
+         if (tools.length) requestBody.tools = tools;
+ 
+-        const response = await firstValueFrom(
+-          this.http.post<any>(endpoint, requestBody, { headers: authHeaders }),
+-        );
++        // Retry only this inference call; never replay appointment actions.
++        const response = await retryGemini503(() => firstValueFrom(
++          this.http.post<any>(endpoint, requestBody, {
++            headers: authHeaders,
++            timeout: 10_000,
++          }),
++        ));
+ 
+         const candidates = response.data?.candidates ?? [];
+         if (!candidates.length) {
+@@ -505,13 +510,16 @@ ${payload.userMessage}
+         text: 'I apologize, but that request took too many steps. Could you try asking in smaller parts?',
+       };
+     } catch (err) {
+-      this.logger.error(
+-        'sendTextMessage: Gemini call failed',
+-        (err as Error)?.message,
+-      );
+-      return {
+-        text: 'Sorry, I am having trouble connecting right now. Please try again later.',
+-      };
++      // Axios messages/objects can contain credential-bearing request data.
++      this.logger.error({
++        event: 'embed-text-failed',
++        upstreamStatus: upstreamStatus(err),
++      });
++      throw new ServiceUnavailableException({
++        statusCode: 503,
++        code: 'AI_UPSTREAM_UNAVAILABLE',
++        message: 'Your assistant is temporarily unavailable. Please try again shortly.',
++      });
+     }
+   }
+ 
+diff --git a/apps/backend/api/src/app/embed/gemini-text-retry.spec.ts b/apps/backend/api/src/app/embed/gemini-text-retry.spec.ts
+new file mode 100644
+index 0000000..d1c4c59
+--- /dev/null
++++ b/apps/backend/api/src/app/embed/gemini-text-retry.spec.ts
+@@ -0,0 +1,34 @@
++import { retryGemini503, upstreamStatus } from './gemini-text-retry';
++
++describe('Gemini text 503 retry', () => {
++  it('recovers from a transient 503 with one bounded retry', async () => {
++    const request = jest.fn().mockRejectedValueOnce({ response: { status: 503 } })
++      .mockResolvedValueOnce({ text: 'Recovered' });
++    const wait = jest.fn().mockResolvedValue(undefined);
++    await expect(retryGemini503(request, wait)).resolves.toEqual({ text: 'Recovered' });
++    expect(request).toHaveBeenCalledTimes(2);
++    expect(wait).toHaveBeenCalledWith(500);
++  });
++
++  it('propagates a persistent 503 after two attempts', async () => {
++    const failure = { response: { status: 503 } };
++    const request = jest.fn().mockRejectedValue(failure);
++    await expect(retryGemini503(request, async () => {})).rejects.toBe(failure);
++    expect(request).toHaveBeenCalledTimes(2);
++  });
++
++  it.each([400, 401, 403, 429, 500])('does not retry status %s', async (status) => {
++    const failure = { response: { status } };
++    const request = jest.fn().mockRejectedValue(failure);
++    await expect(retryGemini503(request)).rejects.toBe(failure);
++    expect(request).toHaveBeenCalledTimes(1);
++  });
++
++  it('does not retry unknown network errors or expose their contents', async () => {
++    const failure = new Error('private upstream detail');
++    const request = jest.fn().mockRejectedValue(failure);
++    await expect(retryGemini503(request)).rejects.toBe(failure);
++    expect(request).toHaveBeenCalledTimes(1);
++    expect(upstreamStatus(failure)).toBeUndefined();
++  });
++});
+diff --git a/apps/backend/api/src/app/embed/gemini-text-retry.ts b/apps/backend/api/src/app/embed/gemini-text-retry.ts
+new file mode 100644
+index 0000000..2e8ae07
+--- /dev/null
++++ b/apps/backend/api/src/app/embed/gemini-text-retry.ts
+@@ -0,0 +1,23 @@
++/** Read a numeric upstream status without exposing Axios URLs/headers/bodies. */
++export function upstreamStatus(error: unknown): number | undefined {
++  if (!error || typeof error !== 'object' || !('response' in error)) return;
++  const response = error.response;
++  if (!response || typeof response !== 'object' || !('status' in response)) return;
++  const status = response.status;
++  return typeof status === 'number' && Number.isInteger(status) ? status : undefined;
++}
++
++/** Retry only Gemini inference, never the enclosing chat/tool/appointment flow. */
++export async function retryGemini503<T>(
++  request: () => Promise<T>,
++  wait: (ms: number) => Promise<void> = (ms) =>
++    new Promise((resolve) => setTimeout(resolve, ms)),
++): Promise<T> {
++  try {
++    return await request();
++  } catch (error) {
++    if (upstreamStatus(error) !== 503) throw error;
++    await wait(500);
++    return request();
++  }
++}

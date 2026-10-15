@@ -66,7 +66,10 @@ class AgentProvider extends ChangeNotifier {
       }
       _session = session;
       _state = ActivationState.success;
-      _expiryTimer = Timer(session.expiresAt.difference(_now()), checkExpiry);
+      final expiresAt = session.expiresAt;
+      if (expiresAt != null) {
+        _expiryTimer = Timer(expiresAt.difference(_now()), checkExpiry);
+      }
     } catch (error) {
       if (_disposed || generation != _generation) return;
       _state = ActivationState.failure;

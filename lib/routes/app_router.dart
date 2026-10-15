@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/agent_provider.dart';
+import '../core/theme/app_theme.dart';
 import '../screens/chat/chat_screen.dart';
 import '../screens/home/home_screen.dart';
 import '../screens/splash/splash_screen.dart';
@@ -29,8 +30,16 @@ GoRouter createAppRouter(
       path: '/',
       builder: (_, _) => const HomeScreen(),
       routes: [
-        GoRoute(path: 'chat', builder: (_, _) => const ChatScreen()),
-        GoRoute(path: 'voice', builder: (_, _) => const VoiceScreen()),
+        GoRoute(
+          path: 'chat',
+          builder: (_, _) =>
+              Theme(data: AppTheme.chat, child: const ChatScreen()),
+        ),
+        GoRoute(
+          path: 'voice',
+          builder: (_, _) =>
+              Theme(data: AppTheme.dark, child: const VoiceScreen()),
+        ),
       ],
     ),
   ],

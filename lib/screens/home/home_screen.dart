@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/validation/uuid_validator.dart';
 import '../../providers/agent_provider.dart';
+import '../../providers/voice_provider.dart';
 import '../../widgets/agent/assistant_card.dart';
 import '../../widgets/common/brand_mark.dart';
 import '../../widgets/common/feedback_banner.dart';
@@ -19,11 +20,14 @@ class _HomeScreenState extends State<HomeScreen> {
   final _form = GlobalKey<FormState>();
   final _agentId = TextEditingController();
   final _userId = TextEditingController();
+  final _scrollController = ScrollController();
+  bool _exiting = false;
 
   @override
   void dispose() {
     _agentId.dispose();
     _userId.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -36,6 +40,25 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  void _backToAgentForm() {
+    FocusScope.of(context).unfocus();
+    context.read<AgentProvider>().reset();
+    if (_scrollController.hasClients) _scrollController.jumpTo(0);
+  }
+
+  Future<void> _exitApp() async {
+    if (_exiting) return;
+    setState(() => _exiting = true);
+    FocusScope.of(context).unfocus();
+    try {
+      await context.read<VoiceProvider>().stop();
+      if (!mounted) return;
+      await SystemNavigator.pop();
+    } finally {
+      if (mounted) setState(() => _exiting = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final agent = context.watch<AgentProvider>();
@@ -46,6 +69,7 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Scaffold(
         body: SafeArea(
           child: CustomScrollView(
+            controller: _scrollController,
             keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
             slivers: [
               SliverToBoxAdapter(
@@ -104,6 +128,31 @@ class _HomeScreenState extends State<HomeScreen> {
                               color: theme.colorScheme.onSurfaceVariant,
                             ),
                           ),
+                          const SizedBox(height: 24),
+                          SizedBox(
+                            width: double.infinity,
+                            child: OutlinedButton.icon(
+                              key: Key(
+                                agent.hasSession
+                                    ? 'back-to-agent-form-button'
+                                    : 'exit-app-button',
+                              ),
+                              onPressed: agent.hasSession
+                                  ? _backToAgentForm
+                                  : (_exiting ? null : _exitApp),
+                              icon: Icon(
+                                agent.hasSession
+                                    ? Icons.arrow_back_rounded
+                                    : Icons.exit_to_app_rounded,
+                              ),
+                              label: Text(agent.hasSession ? 'Back' : 'Exit'),
+                              style: OutlinedButton.styleFrom(
+                                minimumSize: const Size(48, 48),
+                                foregroundColor:
+                                    theme.colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -132,7 +181,7 @@ class _HomeScreenState extends State<HomeScreen> {
       Text('Launch Your\nAI Agent', style: theme.textTheme.headlineLarge),
       const SizedBox(height: 16),
       Text(
-        'Enter your Agent ID (and optional User ID) to validate your subscription and activate the assistant.',
+        'Enter your Agent ID (and optional User ID) to check that your agent is active and launch the assistant.',
         style: theme.textTheme.bodyLarge?.copyWith(
           color: theme.colorScheme.onSurfaceVariant,
         ),
@@ -218,7 +267,7 @@ class _HomeScreenState extends State<HomeScreen> {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              'Agent access and subscription are checked before you begin.',
+              'Your agent’s active status is checked before you begin.',
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
@@ -244,10 +293,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(width: 8),
             Expanded(
-              child: Text(
-                'Subscription active',
-                style: theme.textTheme.labelLarge,
-              ),
+              child: Text('Agent active', style: theme.textTheme.labelLarge),
             ),
           ],
         ),
@@ -270,7 +316,7 @@ class _HomeScreenState extends State<HomeScreen> {
             AssistantCard(
               key: const Key('chat-card'),
               title: 'Chatbot',
-              description: 'Chat with your AI agent using text.',
+              description: 'Talk or type with your AI agent.',
               icon: Icons.chat_bubble_outline_rounded,
               color: theme.colorScheme.primary,
               onTap: () => context.go('/chat'),
@@ -281,7 +327,6 @@ class _HomeScreenState extends State<HomeScreen> {
               description: 'Talk naturally with your AI assistant.',
               icon: Icons.mic_none_rounded,
               color: theme.colorScheme.secondary,
-              badge: 'Visual preview · Live voice coming later',
               onTap: () => context.go('/voice'),
             ),
           ];
@@ -298,12 +343,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   children: [cards[0], const SizedBox(height: 16), cards[1]],
                 );
         },
-      ),
-      const SizedBox(height: 20),
-      TextButton.icon(
-        onPressed: () => provider.reset(),
-        icon: const Icon(Icons.swap_horiz_rounded),
-        label: const Text('Change Agent UUID'),
       ),
     ];
   }

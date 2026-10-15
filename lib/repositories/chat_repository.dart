@@ -28,6 +28,8 @@ class ApiChatRepository implements ChatRepository {
     final result = jsonObject(
       await _api.post(
         ApiEndpoints.textMessage,
+        // Public deployments omit credentials; signed deployments receive the
+        // token unchanged. A rejection is never retried without credentials.
         token: session.embedToken,
         body: {
           'receptionistId': session.agent.id,
@@ -40,6 +42,20 @@ class ApiChatRepository implements ChatRepository {
     );
     final reply = result['text'];
     if (reply is! String || reply.trim().isEmpty) throw AppException.unexpected;
+    // Exact legacy fallback strings from EmbedService.sendTextMessage. These
+    // are HTTP-200 failures, not assistant turns; never put them in history.
+    if ({
+      'Sorry, I am having trouble connecting right now. Please try again later.',
+      'I am unable to process your request right now. Please try again later.',
+      'I was unable to complete that request. Please try again.',
+    }.contains(reply.trim())) {
+      throw const AppException(
+        ErrorKind.assistantUnavailable,
+        'Your assistant is temporarily unavailable. Your message is still here. '
+        'Please try again shortly.',
+        statusCode: 200,
+      );
+    }
     return reply.trim();
   }
 }

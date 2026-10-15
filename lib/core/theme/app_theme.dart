@@ -5,6 +5,17 @@ import 'app_colors.dart';
 abstract final class AppTheme {
   static ThemeData get light => _build(Brightness.light);
   static ThemeData get dark => _build(Brightness.dark);
+  static ThemeData get chat => dark.copyWith(
+    scaffoldBackgroundColor: AppColors.chatBackground,
+    appBarTheme: dark.appBarTheme.copyWith(
+      backgroundColor: AppColors.chatHeader,
+    ),
+    colorScheme: dark.colorScheme.copyWith(
+      surface: AppColors.chatBackground,
+      surfaceContainerLow: AppColors.chatComposer,
+      onSurfaceVariant: AppColors.chatMuted,
+    ),
+  );
 
   static ThemeData _build(Brightness brightness) {
     final dark = brightness == Brightness.dark;

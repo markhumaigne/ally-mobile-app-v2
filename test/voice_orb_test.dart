@@ -22,6 +22,8 @@ void main() {
           find.bySemanticsLabel('Voice orb: ${state.label}'),
           findsOneWidget,
         );
+        expect(find.byType(CircularProgressIndicator), findsNothing);
+        expect(tester.binding.transientCallbackCount, 0);
         expect(tester.takeException(), isNull);
       }
       await tester.pumpWidget(const SizedBox.shrink());

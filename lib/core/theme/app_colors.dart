@@ -20,4 +20,8 @@ abstract final class AppColors {
   static const royal = Color(0xFF1447E6);
   static const darkBlue = Color(0xFF1C398E);
   static const loadingBackground = Color(0xFF1E3A8A);
+  static const chatBackground = Color(0xFF172234);
+  static const chatHeader = Color(0xFF0F172A);
+  static const chatComposer = Color(0xFF1E293B);
+  static const chatMuted = Color(0xFF94A3B8);
 }

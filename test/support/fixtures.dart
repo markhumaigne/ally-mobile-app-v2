@@ -32,6 +32,10 @@ AgentSession testSession({String id = agentId, DateTime? expiresAt}) =>
       expiresAt: expiresAt ?? DateTime.now().add(const Duration(minutes: 30)),
     );
 
+AgentSession publicTestSession({String id = agentId}) => AgentSession(
+  agent: AgentModel(id: id, name: 'Test Concierge'),
+);
+
 class FakeAgentRepository implements AgentRepository {
   int calls = 0;
   String? userReference;

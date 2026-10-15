@@ -19,10 +19,39 @@ class ChatProvider extends ChangeNotifier {
   bool _disposed = false;
   int _generation = 0;
   int _messageId = 0;
+  final Map<MessageRole, int> _voicePartials = {};
 
   List<ChatMessageModel> get messages => List.unmodifiable(_messages);
   AppException? get error => _error;
   bool get isSending => _sending;
+
+  /// Live transcription chunks update a single bubble per speaker/turn.
+  void addVoiceText(MessageRole role, String text, {bool complete = false}) {
+    if (_disposed || text.isEmpty) return;
+    _error = null;
+    final id = _voicePartials[role];
+    final index = id == null ? -1 : _messages.indexWhere((m) => m.id == id);
+    if (index < 0) {
+      final message = ChatMessageModel(
+        id: ++_messageId,
+        role: role,
+        text: text,
+      );
+      _messages.add(message);
+      if (!complete) _voicePartials[role] = message.id;
+    } else {
+      final previous = _messages[index];
+      _messages[index] = ChatMessageModel(
+        id: previous.id,
+        role: role,
+        text: previous.text + text,
+      );
+    }
+    if (complete) _voicePartials.remove(role);
+    notifyListeners();
+  }
+
+  void finishVoiceTurn() => _voicePartials.clear();
 
   void _onAgentChanged() {
     if (identical(_session, _agents.session)) return;
@@ -69,6 +98,7 @@ class ChatProvider extends ChangeNotifier {
     } catch (error) {
       if (_disposed || generation != _generation) return;
       _error = error is AppException ? error : AppException.unknown;
+      if (kDebugMode) debugPrint('[ALLY Chat] error=${_error!.kind.name}');
       _replace(message.withDelivery(MessageDelivery.failed));
       if (_error!.invalidatesSession) {
         _agents.invalidate(_error!);
@@ -90,6 +120,7 @@ class ChatProvider extends ChangeNotifier {
   void reset() {
     ++_generation;
     _messages.clear();
+    _voicePartials.clear();
     _sending = false;
     _error = null;
     if (!_disposed) notifyListeners();

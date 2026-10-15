@@ -60,42 +60,70 @@ void main() {
   }
   for (final status in ['past_due', 'unpaid', 'cancelled', 'incomplete']) {
     test(
-      'rejects non-active subscription $status even if agent is active',
+      'active agent can activate with optional subscription status $status',
       () async {
         payload['data']['subscriptions']['status'] = status;
-        await expectLater(
-          ApiAgentRepository(api).activate(agentId),
-          throwsA(
-            isA<AppException>().having(
-              (e) => e.kind,
-              'kind',
-              ErrorKind.inactiveSubscription,
-            ),
-          ),
-        );
+        final session = await ApiAgentRepository(api).activate(agentId);
+        expect(session.agent.subscriptionStatus, status);
+        expect(session.isValidAt(DateTime.now()), isTrue);
       },
     );
   }
   test(
-    'fails closed for live deployment shape: no subscription and no session token',
+    'activates live deployment shape without subscription or session token',
     () async {
       payload['data']['subscriptions'] = null;
       payload.remove('embedToken');
       payload.remove('embedTokenExpiresAt');
+      final session = await ApiAgentRepository(api).activate(agentId);
+      expect(session.agent.subscriptionStatus, isNull);
+      expect(session.embedToken, isNull);
+      expect(session.expiresAt, isNull);
+      expect(session.isValidAt(DateTime.now()), isTrue);
+    },
+  );
+  test(
+    'partial session credentials cannot become an anonymous session',
+    () async {
+      payload.remove('embedToken');
       await expectLater(
         ApiAgentRepository(api).activate(agentId),
         throwsA(
           isA<AppException>().having(
             (e) => e.kind,
             'kind',
-            ErrorKind.subscriptionUnverified,
+            ErrorKind.unauthorized,
           ),
         ),
       );
     },
   );
-  test('requires a usable token in addition to active status', () async {
-    payload.remove('embedToken');
+  test('missing optional fields and explicit nulls both activate', () async {
+    payload['data'].remove('subscriptions');
+    payload['embedToken'] = null;
+    payload['embedTokenExpiresAt'] = null;
+    final session = await ApiAgentRepository(api).activate(agentId);
+    expect(session.agent.subscriptionStatus, isNull);
+    expect(session.embedToken, isNull);
+    expect(session.expiresAt, isNull);
+  });
+  for (final invalidToken in ['', 'bad token', 123]) {
+    test('rejects malformed supplied token $invalidToken', () async {
+      payload['embedToken'] = invalidToken;
+      await expectLater(
+        ApiAgentRepository(api).activate(agentId),
+        throwsA(
+          isA<AppException>().having(
+            (e) => e.kind,
+            'kind',
+            ErrorKind.unauthorized,
+          ),
+        ),
+      );
+    });
+  }
+  test('supplied token still requires its expiry', () async {
+    payload.remove('embedTokenExpiresAt');
     await expectLater(
       ApiAgentRepository(api).activate(agentId),
       throwsA(
@@ -148,6 +176,56 @@ void main() {
         ],
         'userMessage': 'Hello',
       });
+    },
+  );
+  test(
+    'public chat omits Authorization and keeps the real request contract',
+    () async {
+      payload = {'text': 'Public test reply'};
+      final result = await ApiChatRepository(api).send(
+        session: publicTestSession(),
+        transcript: const [
+          ChatMessageModel(id: 1, role: MessageRole.user, text: 'Hello'),
+        ],
+        text: 'Hello',
+      );
+      expect(result, 'Public test reply');
+      expect(captured.headers.containsKey('Authorization'), isFalse);
+      expect(jsonDecode(captured.body), {
+        'receptionistId': agentId,
+        'transcript': [
+          {'sender': 'user', 'text': 'Hello'},
+        ],
+        'userMessage': 'Hello',
+      });
+    },
+  );
+  test(
+    'server rejection is preserved without retrying or dropping the token',
+    () async {
+      var calls = 0;
+      final rejectingApi = ApiService(
+        config: const AppConfig(apiBaseUrl: 'https://example.test/api/v1'),
+        client: MockClient((request) async {
+          calls++;
+          expect(request.headers['Authorization'], 'Bearer test-only-session');
+          return http.Response('{}', 401);
+        }),
+      );
+      addTearDown(rejectingApi.close);
+      await expectLater(
+        ApiChatRepository(
+          rejectingApi,
+        ).send(session: testSession(), transcript: [], text: 'Hello'),
+        throwsA(
+          isA<AppException>().having(
+            (e) => e.kind,
+            'kind',
+            ErrorKind.unauthorized,
+          ),
+        ),
+      );
+      expect(calls, 1);
     },
   );
   test(
