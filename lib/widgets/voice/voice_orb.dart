@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_gradients.dart';
 import '../../models/voice_state.dart';
+import '../common/brand_mark.dart';
 
 /// Presentation only. The screen supplies live state from VoiceProvider.
 class VoiceOrb extends StatefulWidget {
@@ -87,7 +88,7 @@ class _VoiceOrbState extends State<VoiceOrb>
               : AppGradients.orb;
           final glow = widget.state == VoiceState.error
               ? AppColors.red
-              : AppColors.blue;
+              : AppColors.cyan;
           return SizedBox(
             width: widget.size * 1.25,
             height: widget.size * 1.25,
@@ -113,7 +114,7 @@ class _VoiceOrbState extends State<VoiceOrb>
                         shape: BoxShape.circle,
                         gradient: gradient,
                         border: Border.all(
-                          color: AppColors.lightBlue.withValues(alpha: 0.5),
+                          color: AppColors.cyan.withValues(alpha: 0.5),
                         ),
                         boxShadow: [
                           BoxShadow(
@@ -133,7 +134,7 @@ class _VoiceOrbState extends State<VoiceOrb>
                               size: 48,
                               color: AppColors.white,
                             )
-                          : null,
+                          : Center(child: BrandMark(size: widget.size * 0.6)),
                     ),
                   ),
                 ),
@@ -154,7 +155,7 @@ class _VoiceOrbState extends State<VoiceOrb>
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           border: Border.all(
-            color: AppColors.lightBlue.withValues(alpha: 0.2 * (1 - wave)),
+            color: AppColors.mint.withValues(alpha: 0.2 * (1 - wave)),
             width: 1.2,
           ),
         ),

@@ -8,6 +8,7 @@ import '../../providers/voice_provider.dart';
 import '../../models/chat_message_model.dart';
 import '../../widgets/chat/message_bubble.dart';
 import '../../widgets/common/feedback_banner.dart';
+import '../../widgets/common/brand_mark.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -80,35 +81,49 @@ class _ChatScreenState extends State<ChatScreen> {
     final messages = chat.messages;
     return Scaffold(
       appBar: AppBar(
-        toolbarHeight: 72,
+        toolbarHeight: 80,
         leading: IconButton(
           tooltip: 'Back to assistants',
           onPressed: () => context.go('/'),
           icon: const Icon(Icons.arrow_back_rounded),
         ),
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        title: Row(
           children: [
-            Text(
-              agent?.name ?? 'ALLY Assistant',
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 6),
-            const Row(
-              children: [
-                Icon(Icons.circle, color: AppColors.green, size: 7),
-                SizedBox(width: 6),
-                Expanded(
-                  child: Text(
-                    'Powered by HumAIn',
+            const BrandMark(size: 38),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    agent?.name ?? 'ALLY Assistant',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontSize: 12, color: AppColors.paleBlue),
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 6),
+                  const Row(
+                    children: [
+                      Icon(Icons.circle, color: AppColors.mint, size: 7),
+                      SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          'ALLY · Your AI companion',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: AppColors.paleBlue,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -126,12 +141,44 @@ class _ChatScreenState extends State<ChatScreen> {
                           padding: const EdgeInsets.all(32),
                           child: Column(
                             children: [
-                              const SizedBox(height: 48),
+                              const SizedBox(height: 32),
+                              Container(
+                                padding: const EdgeInsets.all(24),
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: AppColors.darkNavy,
+                                  border: Border.all(
+                                    color: AppColors.cyan.withValues(
+                                      alpha: 0.16,
+                                    ),
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: AppColors.cyan.withValues(
+                                        alpha: 0.08,
+                                      ),
+                                      blurRadius: 60,
+                                      spreadRadius: 8,
+                                    ),
+                                  ],
+                                ),
+                                child: const BrandMark(size: 92),
+                              ),
+                              const SizedBox(height: 28),
                               Text(
                                 'Welcome',
-                                style: theme.textTheme.titleLarge,
+                                style: theme.textTheme.headlineMedium,
                               ),
                               const SizedBox(height: 10),
+                              const Text(
+                                'Good conversations start here.',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: AppColors.mint,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              const SizedBox(height: 16),
                               Text(
                                 'Press the voice button to hear your assistant’s introduction, or type a message below.',
                                 textAlign: TextAlign.center,
@@ -279,7 +326,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                 style: IconButton.styleFrom(
                                   backgroundColor: voice.connected
                                       ? AppColors.red
-                                      : AppColors.white,
+                                      : AppColors.lime,
                                   foregroundColor: voice.connected
                                       ? AppColors.white
                                       : AppColors.chatHeader,

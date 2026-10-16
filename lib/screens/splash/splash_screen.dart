@@ -63,52 +63,72 @@ class _SplashScreenState extends State<SplashScreen>
       ),
       child: Scaffold(
         backgroundColor: AppColors.loadingBackground,
-        body: SafeArea(
-          child: Align(
-            alignment: const Alignment(0, -0.06),
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(32),
-              child: ScaleTransition(
-                scale: reduceMotion
-                    ? const AlwaysStoppedAnimation(1.0)
-                    : _scale,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const BrandMark(size: 80, onSplash: true),
-                    const SizedBox(height: 24),
-                    const Text(
-                      'ALLY',
-                      style: TextStyle(
-                        color: AppColors.white,
-                        fontSize: 32,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 4,
+        body: DecoratedBox(
+          decoration: const BoxDecoration(
+            gradient: RadialGradient(
+              center: Alignment(0, -0.25),
+              radius: 0.85,
+              colors: [Color(0xFF0B3E50), AppColors.midnight],
+            ),
+          ),
+          child: SafeArea(
+            child: Align(
+              alignment: const Alignment(0, -0.06),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(32),
+                child: ScaleTransition(
+                  scale: reduceMotion
+                      ? const AlwaysStoppedAnimation(1.0)
+                      : _scale,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const BrandMark(size: 152),
+                      const SizedBox(height: 28),
+                      const Text(
+                        'ALLY',
+                        style: TextStyle(
+                          color: AppColors.white,
+                          fontSize: 40,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 8,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Created by HumAIn PH',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: AppColors.white.withValues(alpha: 0.7),
-                        fontSize: 12,
-                        letterSpacing: 0.5,
+                      const SizedBox(height: 10),
+                      const Text(
+                        'A LITTLE INTELLIGENCE.\nA LOT OF POSSIBILITY.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: AppColors.mint,
+                          fontSize: 10,
+                          letterSpacing: 2,
+                          height: 1.8,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 36),
-                    SizedBox(
-                      width: 22,
-                      height: 22,
-                      child: CircularProgressIndicator(
-                        value: reduceMotion ? 0.75 : null,
-                        strokeWidth: 2.5,
-                        strokeCap: StrokeCap.round,
-                        color: AppColors.white.withValues(alpha: 0.7),
-                        semanticsLabel: 'Starting ALLY',
+                      const SizedBox(height: 32),
+                      Text(
+                        'Created by HumAIn PH',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: AppColors.chatMuted,
+                          fontSize: 12,
+                          letterSpacing: 0.5,
+                        ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 36),
+                      SizedBox(
+                        width: 22,
+                        height: 22,
+                        child: CircularProgressIndicator(
+                          value: reduceMotion ? 0.75 : null,
+                          strokeWidth: 2.5,
+                          strokeCap: StrokeCap.round,
+                          color: AppColors.cyan,
+                          semanticsLabel: 'Starting ALLY',
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),

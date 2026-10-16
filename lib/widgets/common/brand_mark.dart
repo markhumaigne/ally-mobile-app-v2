@@ -1,32 +1,41 @@
 import 'package:flutter/material.dart';
-import '../../core/theme/app_colors.dart';
-import '../../core/theme/app_gradients.dart';
 
 class BrandMark extends StatelessWidget {
-  const BrandMark({super.key, this.size = 48, this.onSplash = false});
+  const BrandMark({super.key, this.size = 48});
   final double size;
-  final bool onSplash;
 
   @override
-  Widget build(BuildContext context) => ExcludeSemantics(
-    child: Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: onSplash ? AppColors.white.withValues(alpha: 0.12) : null,
-        gradient: onSplash ? null : AppGradients.brand,
-        border: onSplash
-            ? Border.all(
-                color: AppColors.white.withValues(alpha: 0.4),
-                width: 1.5,
-              )
-            : null,
-      ),
-      child: Icon(
-        Icons.mic_rounded,
-        color: AppColors.white,
-        size: size * (onSplash ? 0.42 : 0.52),
+  Widget build(BuildContext context) => Image.asset(
+    'assets/images/ally-logo-v2.png',
+    width: size,
+    height: size,
+    fit: BoxFit.contain,
+    excludeFromSemantics: true,
+    filterQuality: FilterQuality.medium,
+  );
+}
+
+class BrandBanner extends StatelessWidget {
+  const BrandBanner({super.key, this.width = 180});
+  final double width;
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+    label: 'ALLY Agents',
+    image: true,
+    // Remove transparent outer padding in the layout without changing the file.
+    child: ClipRect(
+      child: Align(
+        widthFactor: 0.9,
+        heightFactor: 0.66,
+        child: Image.asset(
+          'assets/images/ally-banner-v3.png',
+          width: width / 0.9,
+          height: width / 0.9 / 2,
+          fit: BoxFit.contain,
+          excludeFromSemantics: true,
+          filterQuality: FilterQuality.medium,
+        ),
       ),
     ),
   );

@@ -8,6 +8,7 @@ import '../../providers/agent_provider.dart';
 import '../../providers/chat_provider.dart';
 import '../../providers/voice_provider.dart';
 import '../../widgets/common/feedback_banner.dart';
+import '../../widgets/common/brand_mark.dart';
 import '../../widgets/voice/voice_orb.dart';
 
 class VoiceScreen extends StatefulWidget {
@@ -78,9 +79,9 @@ class _VoiceScreenState extends State<VoiceScreen> {
       _ => 'Your assistant will introduce itself, then listen.',
     };
     return Scaffold(
-      backgroundColor: AppColors.black,
+      backgroundColor: AppColors.midnight,
       appBar: AppBar(
-        backgroundColor: AppColors.black,
+        backgroundColor: AppColors.midnight,
         toolbarHeight: 80,
         leading: IconButton(
           tooltip: 'Back to assistants',
@@ -109,6 +110,12 @@ class _VoiceScreenState extends State<VoiceScreen> {
             ),
           ],
         ),
+        actions: const [
+          Padding(
+            padding: EdgeInsets.only(right: 20),
+            child: BrandMark(size: 40),
+          ),
+        ],
       ),
       body: SafeArea(
         top: false,
@@ -130,11 +137,12 @@ class _VoiceScreenState extends State<VoiceScreen> {
                     const Padding(
                       padding: EdgeInsets.only(top: 24),
                       child: Text(
-                        'AI RECEPTIONIST',
+                        'A MORE NATURAL CONVERSATION',
+                        textAlign: TextAlign.center,
                         style: TextStyle(
-                          color: AppColors.lightBlue,
-                          letterSpacing: 3,
-                          fontSize: 12,
+                          color: AppColors.mint,
+                          letterSpacing: 2,
+                          fontSize: 10,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -205,8 +213,10 @@ class _VoiceScreenState extends State<VoiceScreen> {
                           style: FilledButton.styleFrom(
                             backgroundColor: active
                                 ? AppColors.red
-                                : AppColors.primary,
-                            foregroundColor: AppColors.white,
+                                : AppColors.lime,
+                            foregroundColor: active
+                                ? AppColors.white
+                                : AppColors.midnight,
                             minimumSize: const Size(180, 56),
                           ),
                         ),

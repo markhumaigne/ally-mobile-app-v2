@@ -25,28 +25,29 @@ import 'support/voice_fixtures.dart';
 import 'package:ally_mobile_app/providers/voice_provider.dart';
 
 void main() {
-  testWidgets('slow first frame cannot consume the blue screen display time', (
-    tester,
-  ) async {
-    final firstFrame = Completer<void>();
-    await tester.pumpWidget(
-      AllyApp(
-        agentRepository: FakeAgentRepository(),
-        chatRepository: FakeChatRepository(),
-        firstFrameReady: firstFrame.future,
-      ),
-    );
-    await tester.pump(const Duration(seconds: 5));
-    expect(find.byType(SplashScreen), findsOneWidget);
-    expect(find.byType(HomeScreen), findsNothing);
-    firstFrame.complete();
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 1900));
-    expect(find.byType(SplashScreen), findsOneWidget);
-    await tester.pumpAndSettle();
-    expect(find.byType(HomeScreen), findsOneWidget);
-    await tester.pumpWidget(const SizedBox.shrink());
-  });
+  testWidgets(
+    'slow first frame cannot consume the branded intro display time',
+    (tester) async {
+      final firstFrame = Completer<void>();
+      await tester.pumpWidget(
+        AllyApp(
+          agentRepository: FakeAgentRepository(),
+          chatRepository: FakeChatRepository(),
+          firstFrameReady: firstFrame.future,
+        ),
+      );
+      await tester.pump(const Duration(seconds: 5));
+      expect(find.byType(SplashScreen), findsOneWidget);
+      expect(find.byType(HomeScreen), findsNothing);
+      firstFrame.complete();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 1900));
+      expect(find.byType(SplashScreen), findsOneWidget);
+      await tester.pumpAndSettle();
+      expect(find.byType(HomeScreen), findsOneWidget);
+      await tester.pumpWidget(const SizedBox.shrink());
+    },
+  );
 
   Future<void> launch(
     WidgetTester tester,
@@ -183,7 +184,7 @@ void main() {
   );
 
   testWidgets(
-    'blue splash stays visible for two seconds, then Home validates form',
+    'branded splash stays visible for two seconds, then Home validates form',
     (tester) async {
       final agents = FakeAgentRepository();
       await tester.pumpWidget(
@@ -198,6 +199,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.byType(HomeScreen), findsOneWidget);
       await tester.ensureVisible(find.byKey(const Key('activate-button')));
+      await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('activate-button')));
       await tester.pumpAndSettle();
       expect(find.text('Enter your Agent UUID.'), findsOneWidget);
@@ -206,7 +208,7 @@ void main() {
     },
   );
 
-  testWidgets('reduced motion keeps the blue intro visible before Home', (
+  testWidgets('reduced motion keeps the branded intro visible before Home', (
     tester,
   ) async {
     tester.platformDispatcher.accessibilityFeaturesTestValue =
@@ -255,6 +257,7 @@ void main() {
         'optional-reference',
       );
       await tester.ensureVisible(find.byKey(const Key('activate-button')));
+      await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('activate-button')));
       await tester.pump();
       expect(find.text('Validating agent…'), findsOneWidget);

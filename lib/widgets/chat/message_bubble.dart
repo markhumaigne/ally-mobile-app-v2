@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_gradients.dart';
 import '../../models/chat_message_model.dart';
 
 class MessageBubble extends StatelessWidget {
@@ -20,9 +21,15 @@ class MessageBubble extends StatelessWidget {
             margin: const EdgeInsets.only(bottom: 16),
             padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
             decoration: BoxDecoration(
-              color: user
-                  ? AppColors.primary
-                  : theme.colorScheme.surfaceContainerLow,
+              color: user ? null : theme.colorScheme.surfaceContainerLow,
+              gradient: user ? AppGradients.brand : null,
+              border: user
+                  ? null
+                  : Border.all(
+                      color: theme.colorScheme.outlineVariant.withValues(
+                        alpha: 0.6,
+                      ),
+                    ),
               borderRadius: BorderRadius.only(
                 topLeft: const Radius.circular(20),
                 topRight: const Radius.circular(20),

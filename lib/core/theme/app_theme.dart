@@ -24,12 +24,15 @@ abstract final class AppTheme {
           seedColor: AppColors.primary,
           brightness: brightness,
         ).copyWith(
-          primary: dark ? AppColors.lightBlue : AppColors.primary,
+          primary: dark ? AppColors.cyan : AppColors.primary,
           onPrimary: dark ? AppColors.midnight : AppColors.white,
-          secondary: dark ? AppColors.violet : AppColors.purple,
+          secondary: dark ? AppColors.mint : AppColors.teal,
           surface: dark ? AppColors.midnight : AppColors.white,
           onSurface: dark ? AppColors.white : AppColors.navy,
-          onSurfaceVariant: dark ? AppColors.paleBlue : AppColors.muted,
+          onSurfaceVariant: dark ? AppColors.chatMuted : AppColors.muted,
+          outlineVariant: dark
+              ? const Color(0xFF254354)
+              : const Color(0xFFDCE6EA),
           error: dark ? AppColors.red : AppColors.red,
         );
     final base = ThemeData(
@@ -63,7 +66,7 @@ abstract final class AppTheme {
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: dark ? AppColors.darkNavy : AppColors.white,
+        fillColor: dark ? AppColors.darkNavy : AppColors.background,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 18,
           vertical: 18,
@@ -87,7 +90,10 @@ abstract final class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
-          textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+          textStyle: base.textTheme.labelLarge?.copyWith(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+          ),
         ),
       ),
       iconButtonTheme: IconButtonThemeData(

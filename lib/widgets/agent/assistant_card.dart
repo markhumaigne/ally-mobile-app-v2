@@ -39,9 +39,17 @@ class AssistantCard extends StatelessWidget {
                   child: Icon(icon, color: color, size: 28),
                 ),
                 const Spacer(),
-                Icon(
-                  Icons.arrow_forward_rounded,
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: color.withValues(alpha: 0.2)),
+                  ),
+                  child: Icon(
+                    Icons.arrow_outward_rounded,
+                    color: color,
+                    size: 20,
+                  ),
                 ),
               ],
             ),
@@ -59,9 +67,10 @@ class AssistantCard extends StatelessWidget {
               Text(
                 badge!,
                 style: TextStyle(
-                  color: Theme.of(context).colorScheme.secondary,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
+                  color: color,
+                  fontSize: 10,
+                  letterSpacing: 1.3,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
             ],
